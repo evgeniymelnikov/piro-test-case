@@ -1,0 +1,14 @@
+{
+  "direction": "ASC",
+  "leftTopPoint": {
+    "positionX": 0,
+    "positionY": 0
+  },
+  "limit": 10,
+  "page": 0,
+  "rightBottomPoint": {
+    "positionX": 100,
+    "positionY": 150
+  },
+  "sort": "indexZ"
+}
