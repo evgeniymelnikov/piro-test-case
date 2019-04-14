@@ -29,8 +29,9 @@ public class ExceptionController {
     }
 
     /**
-     * падает в конструкторе WidgetFilter (когда jaackson пытается сконструировать объект
-     * в качестве параметра для метода контроллера)
+     * перехватываемый эксцепшн падает в конструкторе WidgetFilter (когда jackson пытается сконструировать объект
+     * в качестве параметра для метода контроллера, но не может из-за того, что внутри конструктора вызывается
+     * ResourceIllegalArgumentException)
      */
     @ExceptionHandler(HttpMessageConversionException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
