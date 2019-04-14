@@ -5,6 +5,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
+/**
+ * z-index не валидируется, потому что может быть определён пользователем как null
+ * и тогда он будет определён в момент добавления виджета
+ */
 @Component
 public class WidgetValidator implements Validator {
 
@@ -29,11 +33,11 @@ public class WidgetValidator implements Validator {
         }
 
         if (widget.getHeight() == null) {
-            errors.rejectValue("height", "ширина должна быть определена");
+            errors.rejectValue("height", "высота должна быть определена");
         }
 
-        if (widget.getIndexZ() == null) {
-            errors.rejectValue("indexZ", "индекс Z должен быть определён");
+        if (widget.getWidth() == null) {
+            errors.rejectValue("width", "ширина должна быть определена");
         }
 
         if (widget.getLastUpdate() == null) {

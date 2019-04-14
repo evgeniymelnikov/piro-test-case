@@ -32,16 +32,12 @@ public class WidgetController {
     }
 
     @DeleteMapping("/delete")
-    public void removeWidget(@RequestBody List<String> ids) {
+    public void deleteWidget(@RequestBody List<String> ids) {
         widgetRepository.removeByIds(ids);
     }
 
     @PostMapping
     public List<Widget> findAll(@RequestBody WidgetFilter widgetFilter) {
-        if (widgetFilter.getLimit() == null) {
-            return widgetRepository.findAll(widgetFilter);
-        } else {
-            return widgetRepository.findAll(widgetFilter, widgetFilter.toPageable());
-        }
+        return widgetRepository.findAll(widgetFilter, widgetFilter.toPageable());
     }
 }

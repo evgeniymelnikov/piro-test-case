@@ -103,9 +103,9 @@ public class WidgetControllerTest {
                             .andExpect(jsonPath("positionX", Matchers.is(50)))
                             .andExpect(jsonPath("positionY", Matchers.is(50)));
 
-                    /** не факт, что то значение z-index'а, который мы передавали, нам возвратится
-                     * другой поток после освобождения монитора на хранилище, до того, как сформируется json ответ
-                     * и он будет направлен пользователю, уже может успеть накатить свои изменения
+                    /** не факт, что нам возвратится то значение z-index'а, которое мы передавали.
+                     * Другой поток после освобождения монитора на хранилище может успеть накатить свои изменения
+                     * (до того, как сформируется json ответ и он будет направлен пользователю)
                      * см. {@link com.github.evgeniymelnikov.piro.service.WidgetService#addWidget(Widget)} и комментарий в нём
                      **/
 
@@ -141,6 +141,69 @@ public class WidgetControllerTest {
         Assert.assertEquals(40, hashSet.size());
     }
 
+    @Test
+    public void addWidget_withNullInIndexZ() throws Exception {
+        widgetStore.getStore().clear();
+        addWidget();
+        addWidget();
+        addWidget();
+        String responseBody = mockMvc.perform(post(controllerPath + "/add")
+                .accept(MediaType.APPLICATION_JSON_UTF8)
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content(LoadFileUtils.readFile(filePath + "/add_widget_null_in_index_z.json")))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+
+        String id = objectMapper.readTree(responseBody).path("id").asText();
+        Assert.assertEquals((Long) 3L, widgetRepository.findById(id).get().getIndexZ());
+    }
+
+    @Test
+    public void addWidget_notCorrect() throws Exception {
+        addNotCorrect("widget_without_positionX.json");
+        addNotCorrect("widget_without_positionY.json");
+        addNotCorrect("widget_without_height.json");
+        addNotCorrect("widget_without_width.json");
+    }
+
+    @Test
+    public void updateWidget_notCorrect() throws Exception {
+        String newContent = LoadFileUtils.readFile(filePath + "/add_widget_50_50.json");
+
+        String responseBody = mockMvc.perform(post(controllerPath + "/add")
+                .accept(MediaType.APPLICATION_JSON_UTF8)
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content(newContent))
+//                .andDo(print())
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+
+        String addedWidgetId = objectMapper.readTree(responseBody).path("id").asText();
+
+        updateNotCorrect("widget_without_positionX.json", addedWidgetId);
+        updateNotCorrect("widget_without_positionY.json", addedWidgetId);
+        updateNotCorrect("widget_without_height.json", addedWidgetId);
+        updateNotCorrect("widget_without_width.json", addedWidgetId);
+        updateNotCorrect("widget_without_index_z_only_for_upd.json", addedWidgetId);
+
+        //корректный контент, но несовпадающий id в url и в json
+        mockMvc.perform(put(controllerPath + String.format("/%s/widget", UUID.randomUUID().toString()))
+                .accept(MediaType.APPLICATION_JSON_UTF8)
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content(LoadFileUtils.readFile(filePath + "/update_widget.json")))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+
+        //корректный контент, но несуществующий id
+        String notExistedId = UUID.randomUUID().toString();
+        String content = LoadFileUtils.readFile(filePath + "/update_widget.json").replace("!%%%!", notExistedId);
+        mockMvc.perform(put(controllerPath + String.format("/%s/widget", notExistedId))
+                .accept(MediaType.APPLICATION_JSON_UTF8)
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content(content))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+    }
+
+
 
     @Test
     public void updateWidget() throws Exception {
@@ -149,7 +212,7 @@ public class WidgetControllerTest {
                 .accept(MediaType.APPLICATION_JSON_UTF8)
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
                 .content(newContent))
-                .andDo(print())
+//                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("id", Matchers.notNullValue()))
                 .andExpect(jsonPath("indexZ", Matchers.is(0)))
@@ -191,7 +254,7 @@ public class WidgetControllerTest {
     }
 
     @Test
-    public void removeWidget() throws Exception {
+    public void deleteWidget() throws Exception {
         String newContent = LoadFileUtils.readFile(filePath + "/add_widget_50_50.json");
         String responseBody = mockMvc.perform(post(controllerPath + "/add")
                 .accept(MediaType.APPLICATION_JSON_UTF8)
@@ -241,6 +304,60 @@ public class WidgetControllerTest {
     }
 
     @Test
+    public void findAll_notCorrect() throws Exception {
+        widgetStore.getStore().clear();
+        for (int i = 0; i < 25; i++) {
+            addWidget();
+        }
+
+        mockMvc.perform(post(controllerPath)
+                .accept(MediaType.APPLICATION_JSON_UTF8)
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content("{\"limit\":600}"))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(post(controllerPath)
+                .accept(MediaType.APPLICATION_JSON_UTF8)
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content("{\"limit\":-4}"))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(post(controllerPath)
+                .accept(MediaType.APPLICATION_JSON_UTF8)
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content("{\"page\":-4}"))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(post(controllerPath)
+                .accept(MediaType.APPLICATION_JSON_UTF8)
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content("{\"sort\": \"ldsfsdfsd\"}"))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void findAll_defaultLimitPageSort() throws Exception {
+        widgetStore.getStore().clear();
+        for (int i = 0; i < 25; i++) {
+            addWidget();
+        }
+
+        mockMvc.perform(post(controllerPath)
+                .accept(MediaType.APPLICATION_JSON_UTF8)
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content("{}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", Matchers.hasSize(10)))
+                .andExpect(jsonPath("$[0].indexZ", Matchers.is(0)))
+                .andExpect(jsonPath("$[9].indexZ", Matchers.is(9)));
+    }
+
+    @Test
     public void findAll_filterByPoints() throws Exception {
         widgetStore.getStore().clear();
         mockMvc.perform(post(controllerPath + "/add")
@@ -265,5 +382,27 @@ public class WidgetControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", Matchers.hasSize(2)));
+    }
+
+    private void addNotCorrect(String fileName) throws Exception {
+        String newContent = LoadFileUtils.readFile(filePath + String.format("/not_correct/%s", fileName));
+        mockMvc.perform(post(controllerPath + "/add")
+                .accept(MediaType.APPLICATION_JSON_UTF8)
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content(newContent))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+    }
+
+    private void updateNotCorrect(String fileName, String id) throws Exception {
+        String newContent = LoadFileUtils.readFile(filePath + String.format("/not_correct/%s", fileName));
+        String preparedContent = newContent.substring(0,1) + String.format("\"id\":\"%s\", ", id) + newContent.substring(1);
+        mockMvc.perform(put(controllerPath + String.format("/%s/widget", id))
+                .accept(MediaType.APPLICATION_JSON_UTF8)
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content(preparedContent))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+
     }
 }
