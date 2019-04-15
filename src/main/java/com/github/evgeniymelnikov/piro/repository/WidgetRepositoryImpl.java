@@ -3,6 +3,7 @@ package com.github.evgeniymelnikov.piro.repository;
 import com.github.evgeniymelnikov.piro.exception.ResourceIllegalArgumentException;
 import com.github.evgeniymelnikov.piro.model.Widget;
 import com.github.evgeniymelnikov.piro.model.filter.Pageable;
+import com.github.evgeniymelnikov.piro.model.filter.SortDirection;
 import com.github.evgeniymelnikov.piro.model.filter.WidgetFilter;
 import com.github.evgeniymelnikov.piro.store.WidgetStore;
 import lombok.RequiredArgsConstructor;
@@ -63,6 +64,7 @@ public class WidgetRepositoryImpl implements CustomRepository<Widget, WidgetFilt
     @Override
     public List<Widget> findAll(WidgetFilter filter, Pageable pageable) {
         Stream<Widget> widgetStreamAfterFilter = widgetStore.getStore().stream().filter(filter.toPredicate());
+        SortDirection direction = pageable.getDirection();
 
         for (String sortFieldName : pageable.getSort()) {
 
@@ -85,7 +87,12 @@ public class WidgetRepositoryImpl implements CustomRepository<Widget, WidgetFilt
             Class<? extends Comparable> propertyType = (Class<? extends Comparable>) propertyDescriptor.getPropertyType();
             widgetStreamAfterFilter = widgetStreamAfterFilter.sorted((o1, o2) -> {
                 try {
-                    return propertyType.cast(readMethod.invoke(o1)).compareTo(propertyType.cast(readMethod.invoke(o2)));
+                    int i = propertyType.cast(readMethod.invoke(o1)).compareTo(propertyType.cast(readMethod.invoke(o2)));
+                    if (direction == SortDirection.DESC) {
+                        return -i;
+                    } else {
+                        return i;
+                    }
                 } catch (IllegalAccessException | InvocationTargetException e) {
                     e.printStackTrace();
                     throw new RuntimeException("внутренняя ошибка при сортирвоке");

@@ -1,5 +1,7 @@
 package com.github.evgeniymelnikov.piro.model.filter;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.evgeniymelnikov.piro.model.Widget;
 import com.github.evgeniymelnikov.piro.model.metamodel.Widget_;
 import lombok.Getter;
@@ -16,7 +18,10 @@ public class WidgetFilter extends AbstractFilter<Widget> {
     private Point leftTopPoint;
     private Point rightBottomPoint;
 
-    public WidgetFilter(Long page, Long limit, String sort, String direction, Point leftTopPoint, Point rightBottomPoint) {
+    @JsonCreator
+    public WidgetFilter(@JsonProperty("page") Long page, @JsonProperty("limit") Long limit,
+                        @JsonProperty("sort") String sort, @JsonProperty("direction") String direction,
+                        @JsonProperty("leftTopPoint") Point leftTopPoint, @JsonProperty("rightBottomPoint") Point rightBottomPoint) {
         super(page, limit, sort, direction);
         this.leftTopPoint = leftTopPoint;
         this.rightBottomPoint = rightBottomPoint;
