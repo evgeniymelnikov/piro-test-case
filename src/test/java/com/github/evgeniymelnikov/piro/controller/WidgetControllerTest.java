@@ -81,11 +81,11 @@ public class WidgetControllerTest {
 
     @Test
     public void addWidget_withConcurrency() throws Exception {
-
+        widgetStore.getStore().clear();
         String newContent = LoadFileUtils.readFile(filePath + "/add_widget_50_50.json");
         String oneMoreContent = LoadFileUtils.readFile(filePath + "/add_widget_100_100.json");
         ExecutorService executorService = Executors.newFixedThreadPool(8);
-        List<Future<?>> futures = Collections.synchronizedList(new ArrayList<>());
+        List<Future<?>> futures = new ArrayList<>();
 
         for (int i = 0; i < 20; i++) {
             //z-index = 0
@@ -165,45 +165,6 @@ public class WidgetControllerTest {
         addNotCorrect("widget_without_width.json");
     }
 
-    @Test
-    public void updateWidget_notCorrect() throws Exception {
-        String newContent = LoadFileUtils.readFile(filePath + "/add_widget_50_50.json");
-
-        String responseBody = mockMvc.perform(post(controllerPath + "/add")
-                .accept(MediaType.APPLICATION_JSON_UTF8)
-                .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(newContent))
-//                .andDo(print())
-                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
-
-        String addedWidgetId = objectMapper.readTree(responseBody).path("id").asText();
-
-        updateNotCorrect("widget_without_positionX.json", addedWidgetId);
-        updateNotCorrect("widget_without_positionY.json", addedWidgetId);
-        updateNotCorrect("widget_without_height.json", addedWidgetId);
-        updateNotCorrect("widget_without_width.json", addedWidgetId);
-        updateNotCorrect("widget_without_index_z_only_for_upd.json", addedWidgetId);
-
-        //корректный контент, но несовпадающий id в url и в json
-        mockMvc.perform(put(controllerPath + String.format("/%s/widget", UUID.randomUUID().toString()))
-                .accept(MediaType.APPLICATION_JSON_UTF8)
-                .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(LoadFileUtils.readFile(filePath + "/update_widget.json")))
-                .andDo(print())
-                .andExpect(status().isBadRequest());
-
-        //корректный контент, но несуществующий id
-        String notExistedId = UUID.randomUUID().toString();
-        String content = LoadFileUtils.readFile(filePath + "/update_widget.json").replace("!%%%!", notExistedId);
-        mockMvc.perform(put(controllerPath + String.format("/%s/widget", notExistedId))
-                .accept(MediaType.APPLICATION_JSON_UTF8)
-                .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(content))
-                .andDo(print())
-                .andExpect(status().isBadRequest());
-    }
-
-
 
     @Test
     public void updateWidget() throws Exception {
@@ -251,6 +212,132 @@ public class WidgetControllerTest {
         Assert.assertEquals((Long) 0L, widget.getPositionY());
         Assert.assertEquals(LocalDate.now(), widget.getLastUpdate());
 
+    }
+
+    /**
+     * проверяем на то, что не получим расщеплённое состояние
+     */
+    @Test
+    public void updateWidget_withConcurrency() throws Exception {
+        widgetStore.getStore().clear();
+        String newContent = LoadFileUtils.readFile(filePath + "/add_widget_50_50.json");
+        String responseBody = mockMvc.perform(post(controllerPath + "/add")
+                .accept(MediaType.APPLICATION_JSON_UTF8)
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content(newContent))
+//                .andDo(print())
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+
+        String addedWidgetId = objectMapper.readTree(responseBody).path("id").asText();
+
+        final String updateContent = LoadFileUtils.readFile(filePath + "/update_widget_with_concurrency.json");
+        ExecutorService executorService = Executors.newFixedThreadPool(8);
+        List<Future<?>> futures = new ArrayList<>();
+
+        for (int i = 1; i < 26; i++) {
+
+            final int iFin = i;
+
+            futures.add(executorService.submit(() -> {
+                final int iTemp = iFin;
+
+                String preparedContent = updateContent.replace("!%%%!", addedWidgetId)
+                        .replace("1n", String.valueOf(10 * iTemp))
+                        .replace("2n", String.valueOf(10 * iTemp));
+
+                try {
+                    System.out.println(mockMvc.perform(put(controllerPath + String.format("/%s/widget", addedWidgetId))
+                            .accept(MediaType.APPLICATION_JSON_UTF8)
+                            .contentType(MediaType.APPLICATION_JSON_UTF8)
+                            .content(preparedContent))
+//                            .andDo(print())
+                            .andExpect(status().isOk())
+                            .andExpect(jsonPath("id", Matchers.notNullValue()))
+                            .andExpect(jsonPath("indexZ", Matchers.is(0)))
+                            .andExpect(jsonPath("height", Matchers.is(0)))
+                            .andExpect(jsonPath("width", Matchers.is(0)))
+                            .andExpect(jsonPath("positionX", Matchers.is(10 * iTemp)))
+                            .andExpect(jsonPath("positionY", Matchers.is(10 * iTemp)))
+                            .andExpect(jsonPath("lastUpdate", Matchers.is(LocalDate.now().toString())))
+                            .andReturn().getResponse().getContentAsString());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }));
+
+            futures.add(executorService.submit(() -> {
+                final double iTemp = iFin * 1.5D;
+
+                String preparedContent = updateContent.replace("!%%%!", addedWidgetId)
+                        .replace("1n", String.valueOf(10 * iTemp)).replace("2n", String.valueOf(10 * iTemp));
+
+                try {
+                    System.out.println(mockMvc.perform(put(controllerPath + String.format("/%s/widget", addedWidgetId))
+                            .accept(MediaType.APPLICATION_JSON_UTF8)
+                            .contentType(MediaType.APPLICATION_JSON_UTF8)
+                            .content(preparedContent))
+//                            .andDo(print())
+                            .andExpect(status().isOk())
+                            .andExpect(jsonPath("id", Matchers.notNullValue()))
+                            .andExpect(jsonPath("indexZ", Matchers.is(0)))
+                            .andExpect(jsonPath("height", Matchers.is(0)))
+                            .andExpect(jsonPath("width", Matchers.is(0)))
+                            .andExpect(jsonPath("positionX", Matchers.is((int) (10 * iTemp))))
+                            .andExpect(jsonPath("positionY", Matchers.is((int) (10 * iTemp))))
+                            .andExpect(jsonPath("lastUpdate", Matchers.is(LocalDate.now().toString())))
+                            .andReturn().getResponse().getContentAsString());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }));
+        }
+
+        for (Future<?> future : futures) {
+            future.get();
+        }
+
+        executorService.shutdown();
+
+        widgetStore.getStore().forEach(System.out::println);
+    }
+
+
+    @Test
+    public void updateWidget_notCorrect() throws Exception {
+        String newContent = LoadFileUtils.readFile(filePath + "/add_widget_50_50.json");
+
+        String responseBody = mockMvc.perform(post(controllerPath + "/add")
+                .accept(MediaType.APPLICATION_JSON_UTF8)
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content(newContent))
+//                .andDo(print())
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+
+        String addedWidgetId = objectMapper.readTree(responseBody).path("id").asText();
+
+        updateNotCorrect("widget_without_positionX.json", addedWidgetId);
+        updateNotCorrect("widget_without_positionY.json", addedWidgetId);
+        updateNotCorrect("widget_without_height.json", addedWidgetId);
+        updateNotCorrect("widget_without_width.json", addedWidgetId);
+        updateNotCorrect("widget_without_index_z_only_for_upd.json", addedWidgetId);
+
+        //корректный контент, но несовпадающий id в url и в json
+        mockMvc.perform(put(controllerPath + String.format("/%s/widget", UUID.randomUUID().toString()))
+                .accept(MediaType.APPLICATION_JSON_UTF8)
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content(LoadFileUtils.readFile(filePath + "/update_widget.json")))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+
+        //корректный контент, но несуществующий id
+        String notExistedId = UUID.randomUUID().toString();
+        String content = LoadFileUtils.readFile(filePath + "/update_widget.json").replace("!%%%!", notExistedId);
+        mockMvc.perform(put(controllerPath + String.format("/%s/widget", notExistedId))
+                .accept(MediaType.APPLICATION_JSON_UTF8)
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content(content))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
     }
 
     @Test
