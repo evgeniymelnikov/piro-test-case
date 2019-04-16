@@ -33,7 +33,7 @@ public class WidgetController {
 
     @DeleteMapping("/delete")
     public void deleteWidget(@RequestBody List<String> ids) {
-        widgetRepository.removeByIds(ids);
+        widgetService.removeByIds(ids);
     }
 
     @PostMapping

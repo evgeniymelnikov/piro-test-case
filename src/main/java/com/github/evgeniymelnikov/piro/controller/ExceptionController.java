@@ -24,7 +24,7 @@ public class ExceptionController {
     @ExceptionHandler(ResourceNotFoundException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ResponseBody
-    public ErrorResponseEntity handleResourceIllegalArgumentException(ResourceNotFoundException e) {
+    public ErrorResponseEntity handleResourceNotFoundException(ResourceNotFoundException e) {
         return createErrorResponseEntity(e, HttpStatus.BAD_REQUEST);
     }
 
