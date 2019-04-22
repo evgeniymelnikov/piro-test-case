@@ -52,9 +52,9 @@ public class WidgetService {
                         storedWidget.getIndexZ().equals(widget.getIndexZ()));
                 if (isChosenIndexZExisted) {
                     widgetStore.getStore().forEach(storedWidget -> {
-                        if (storedWidget.getIndexZ() >= widget.getIndexZ()) {
-                            storedWidget.setIndexZ(storedWidget.getIndexZ() + 1L);
-                        }
+                            if (storedWidget.getIndexZ() >= widget.getIndexZ()) {
+                                storedWidget.checkIndexZAndIfNeedUpdateIt(widget.getIndexZ(), 1L);
+                            }
                     });
                 }
             }
@@ -82,7 +82,7 @@ public class WidgetService {
         return widget;
     }
 
-    public void removeByIds(List<String> ids){
+    public void removeByIds(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             throw new ResourceIllegalArgumentException("ОШИБКА: для удаления виджетов требуется передать их id");
         }

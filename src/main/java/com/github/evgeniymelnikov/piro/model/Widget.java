@@ -29,4 +29,13 @@ public class Widget {
             this.setLastUpdate(widget.getLastUpdate());
         }
     }
+
+    public void checkIndexZAndIfNeedUpdateIt(Long markIndex, Long valueForSummarizeWithIndexZ) {
+        if (markIndex == null) {return;}
+        synchronized (this) {
+            if (this.getIndexZ() != null && this.getIndexZ() >= markIndex) {
+                this.setIndexZ(this.getIndexZ() + valueForSummarizeWithIndexZ);
+            }
+        }
+    }
 }
