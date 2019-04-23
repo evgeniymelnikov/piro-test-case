@@ -67,11 +67,6 @@ public abstract class AbstractFilter<T extends Widget> {
         return new String[]{getIdFieldName(), sort};
     }
 
-    protected abstract String getDefaultSort();
-    protected abstract String[] getFieldsFromMetamodel();
-
-    protected abstract String getIdFieldName();
-
     public abstract Predicate<T> toPredicate();
 
     protected void checkSortFieldsExists() {
@@ -84,4 +79,9 @@ public abstract class AbstractFilter<T extends Widget> {
         checkSortFieldsExists();
         return new Pageable(page, limit, direction, getSortFields());
     }
+
+
+    protected abstract String getDefaultSort();
+    protected abstract String getIdFieldName();
+    protected abstract String[] getFieldsFromMetamodel();
 }

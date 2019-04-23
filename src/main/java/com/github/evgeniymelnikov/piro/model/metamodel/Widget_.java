@@ -34,25 +34,11 @@ public class Widget_ {
     private final static String[] fieldNames
             = new String[] {ID, POSITION_X, POSITION_Y, WIDTH, HEIGHT, INDEX_Z, LAST_UPDATE, LOCK};
 
-    private final static List<PropertyDescriptor> propertyDescriptors;
-
     static {
-        try {
-            propertyDescriptors = Arrays.asList(Introspector.getBeanInfo(Widget.class).getPropertyDescriptors());
-        } catch (IntrospectionException ex) {
-            ex.printStackTrace();
-            throw new RuntimeException("ошибка при инициализации метамодели");
-        }
-
         if (!Arrays.asList(fieldNames).containsAll(
                 Arrays.stream(Widget.class.getDeclaredFields()).map(Field::getName).collect(Collectors.toList()))) {
             throw new RuntimeException("ошибка, метамодель не актуальна");
         }
-    }
-
-
-    public static List<PropertyDescriptor> getPropertyDescriptors() {
-        return propertyDescriptors;
     }
 
     public static String[] getFieldNames() {

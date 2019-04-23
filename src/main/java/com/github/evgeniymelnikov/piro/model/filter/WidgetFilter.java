@@ -28,21 +28,6 @@ public class WidgetFilter extends AbstractFilter<Widget> {
     }
 
     @Override
-    protected String getDefaultSort() {
-        return Widget_.INDEX_Z;
-    }
-
-    @Override
-    protected String getIdFieldName() {
-        return Widget_.ID;
-    }
-
-    @Override
-    protected String[] getFieldsFromMetamodel() {
-        return Widget_.getFieldNames();
-    }
-
-    @Override
     public Predicate<Widget> toPredicate() {
 
         List<Predicate<Widget>> predicates = new ArrayList<>();
@@ -87,5 +72,20 @@ public class WidgetFilter extends AbstractFilter<Widget> {
         } else {
             return widget -> true;
         }
+    }
+
+    @Override
+    protected String getDefaultSort() {
+        return Widget_.INDEX_Z;
+    }
+
+    @Override
+    protected String getIdFieldName() {
+        return Widget_.ID;
+    }
+
+    @Override
+    protected String[] getFieldsFromMetamodel() {
+        return Widget_.getFieldNames();
     }
 }
