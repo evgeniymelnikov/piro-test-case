@@ -34,11 +34,8 @@ public class WidgetService {
         widget.setId(UUID.randomUUID().toString());
         widget.setLastUpdate(LocalDate.now());
         validate(widget);
-
-        // синхронизируeм - поскольку потребуется поменять z-index у некоторых элементов в хранилище,
-        // на это время надо исключить доступ иных потоков к ресурсу
+        Widget copy;
         synchronized (widgetStore.getStore()) {
-
             if (widget.getIndexZ() == null) {
                 Optional<Widget> widgetWithMaxIndexZ = widgetStore.getStore().stream()
                         .max(Comparator.comparing(Widget::getIndexZ));
@@ -51,21 +48,20 @@ public class WidgetService {
                 boolean isChosenIndexZExisted = widgetStore.getStore().stream().anyMatch(storedWidget ->
                         storedWidget.getIndexZ().equals(widget.getIndexZ()));
                 if (isChosenIndexZExisted) {
-                    widgetStore.getStore().forEach(storedWidget -> {
-                            if (storedWidget.getIndexZ() >= widget.getIndexZ()) {
-                                storedWidget.checkIndexZAndIfNeedUpdateIt(widget.getIndexZ(), 1L);
-                            }
-                    });
+                    widgetStore.getStore().forEach(storedWidget ->
+                            storedWidget.checkIndexZAndIfNeedIncreaseIt(widget.getIndexZ(), 1L));
                 }
             }
 
+            copy = Widget.copy(widget);
             widgetRepository.save(widget);
         }
 
+
         // возможно, что сохранялся один z-index, а в ответе будет уже изменившийся
-        // (из-за выполнения данного метода другими потоками).
-        // Если необходимо избежать этого, то в synchronize блоке надо создавать копию объекта и отдавать пользователю её.
-        return widget;
+        // (из-за изменения виджета после сохранения и до обработки контролером).
+        // Чтобы избежать этого, возвращаем копию.
+        return copy;
     }
 
     public Widget update(Widget widget) {

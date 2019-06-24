@@ -20,6 +20,7 @@ public class WidgetController {
 
     @PostMapping("/add")
     public Widget addWidget(@RequestBody Widget widget) {
+        System.out.println(widget);
         return widgetService.addWidget(widget);
     }
 

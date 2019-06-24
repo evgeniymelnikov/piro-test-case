@@ -103,12 +103,6 @@ public class WidgetControllerTest {
                             .andExpect(jsonPath("positionX", Matchers.is(50)))
                             .andExpect(jsonPath("positionY", Matchers.is(50)));
 
-                    /** не факт, что нам возвратится то значение z-index'а, которое мы передавали.
-                     * Другой поток после освобождения монитора на хранилище может успеть накатить свои изменения
-                     * (до того, как сформируется json ответ и он будет направлен пользователю)
-                     * см. {@link com.github.evgeniymelnikov.piro.service.WidgetService#addWidget(Widget)} и комментарий в нём
-                     **/
-
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

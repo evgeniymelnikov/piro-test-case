@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 /**
  * Приводятся наименования полей, будет использоваться при проверке в сортировке.
  * Контракт следующий: изменение никаких полей (включая содержание коллекции и массива) недопустимо.
- * Можно защититься через выдачу копии в геттерах.
  * Без @Component (с сопутствующей Bean initialization логикой) статический блок будет выполнен только в момент первого обращения к классу,
  * в данном случае лучше, если в момент подъёма приложения будет осуществлена проверка.
  */
@@ -37,11 +36,11 @@ public class Widget_ {
     static {
         if (!Arrays.asList(fieldNames).containsAll(
                 Arrays.stream(Widget.class.getDeclaredFields()).map(Field::getName).collect(Collectors.toList()))) {
-            throw new RuntimeException("ошибка, метамодель не актуальна");
+            throw new RuntimeException("Ошибка, метамодель не актуальна");
         }
     }
 
     public static String[] getFieldNames() {
-        return fieldNames;
+        return Arrays.copyOf(fieldNames, fieldNames.length);
     }
 }
