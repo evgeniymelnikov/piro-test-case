@@ -6,7 +6,6 @@ import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.mockito.internal.hamcrest.HamcrestArgumentMatcher;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Arrays;
@@ -19,7 +18,7 @@ public class AbstractFilterTest {
     public void checkSortFieldsExists() {
         AbstractFilter abstractFilterMock = Mockito.mock(AbstractFilter.class);
         Mockito.when(abstractFilterMock.getSortFields()).thenReturn(new String[]{"positionX", "id"});
-        Mockito.when(abstractFilterMock.getFieldsFromMetamodel()).thenReturn(new String[]{"width", "indexZ","positionX", "id"});
+        Mockito.when(abstractFilterMock.getFieldNamesFromMetaModel()).thenReturn(new String[]{"width", "indexZ","positionX", "id"});
         Mockito.doCallRealMethod().when(abstractFilterMock).checkSortFieldsExists();
         abstractFilterMock.checkSortFieldsExists();
     }
@@ -28,7 +27,7 @@ public class AbstractFilterTest {
     public void checkSortFieldsExistsFailTest() {
         AbstractFilter abstractFilterMock = Mockito.mock(AbstractFilter.class);
         Mockito.when(abstractFilterMock.getSortFields()).thenReturn(new String[]{"dsfjsdjklfksdjfhk", "id"});
-        Mockito.when(abstractFilterMock.getFieldsFromMetamodel()).thenReturn(new String[]{"width", "indexZ","positionX", "id"});
+        Mockito.when(abstractFilterMock.getFieldNamesFromMetaModel()).thenReturn(new String[]{"width", "indexZ","positionX", "id"});
         Mockito.doCallRealMethod().when(abstractFilterMock).checkSortFieldsExists();
         abstractFilterMock.checkSortFieldsExists();
     }

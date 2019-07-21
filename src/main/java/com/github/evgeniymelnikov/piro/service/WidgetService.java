@@ -16,6 +16,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,6 +26,7 @@ public class WidgetService {
     private final WidgetStore widgetStore;
     private final WidgetRepositoryImpl widgetRepository;
     private final WidgetValidator widgetValidator;
+    private final Object lock = new Object();
 
     public Widget addWidget(Widget widget) {
         if (widget == null) {
@@ -35,7 +37,7 @@ public class WidgetService {
         widget.setLastUpdate(LocalDate.now());
         validate(widget);
         Widget copy;
-        synchronized (widgetStore.getStore()) {
+        synchronized (lock) {
             if (widget.getIndexZ() == null) {
                 Optional<Widget> widgetWithMaxIndexZ = widgetStore.getStore().stream()
                         .max(Comparator.comparing(Widget::getIndexZ));
@@ -83,7 +85,6 @@ public class WidgetService {
             throw new ResourceIllegalArgumentException("ОШИБКА: для удаления виджетов требуется передать их id");
         }
 
-        // без проверки на exist
         widgetRepository.removeByIds(ids);
     }
 

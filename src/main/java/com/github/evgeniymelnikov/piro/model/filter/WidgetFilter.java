@@ -75,7 +75,7 @@ public class WidgetFilter extends AbstractFilter<Widget> {
     }
 
     @Override
-    protected String getDefaultSort() {
+    protected String getDefaultSortFieldName() {
         return Widget_.INDEX_Z;
     }
 
@@ -85,7 +85,7 @@ public class WidgetFilter extends AbstractFilter<Widget> {
     }
 
     @Override
-    protected String[] getFieldsFromMetamodel() {
+    protected String[] getFieldNamesFromMetaModel() {
         return Widget_.getFieldNames();
     }
 }

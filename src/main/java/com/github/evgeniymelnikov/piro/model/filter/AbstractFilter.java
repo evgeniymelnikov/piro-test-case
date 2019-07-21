@@ -40,7 +40,7 @@ public abstract class AbstractFilter<T extends Widget> {
         this.limit = limit == null ? 10 : limit;
 
         if (!StringUtils.hasText(sort) || "null".equals(sort) || "undefined".equals(sort)) {
-            this.sort = getDefaultSort();
+            this.sort = getDefaultSortFieldName();
         } else {
             this.sort = sort;
         }
@@ -70,7 +70,7 @@ public abstract class AbstractFilter<T extends Widget> {
     public abstract Predicate<T> toPredicate();
 
     protected void checkSortFieldsExists() {
-       if (!Arrays.asList(getFieldsFromMetamodel()).containsAll(Arrays.asList(getSortFields()))) {
+       if (!Arrays.asList(getFieldNamesFromMetaModel()).containsAll(Arrays.asList(getSortFields()))) {
            throw new ResourceIllegalArgumentException("ОШИБКА: для сортировки указано недопустимое поле");
         }
     }
@@ -80,8 +80,7 @@ public abstract class AbstractFilter<T extends Widget> {
         return new Pageable(page, limit, direction, getSortFields());
     }
 
-
-    protected abstract String getDefaultSort();
+    protected abstract String getDefaultSortFieldName();
     protected abstract String getIdFieldName();
-    protected abstract String[] getFieldsFromMetamodel();
+    protected abstract String[] getFieldNamesFromMetaModel();
 }

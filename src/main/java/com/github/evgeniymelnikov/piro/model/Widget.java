@@ -22,7 +22,7 @@ public class Widget {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDate lastUpdate;
 
-    public static Widget copy(Widget that) {
+    public synchronized static Widget copy(Widget that) {
         return new Widget(that.getId(), that.getPositionX(), that.getPositionY(),
                 that.getWidth(), that.getHeight(), that.getIndexZ(), that.getLastUpdate());
     }
